@@ -22,6 +22,12 @@ const bookSchema = new mongoose.Schema({
 
 
 
+
+ 
+    
+    
+    
+    
     cover: { type: String, default: 'default-cover.jpg' },
 
 
@@ -35,6 +41,9 @@ const bookSchema = new mongoose.Schema({
             type: Number,
             required: [true],
             min: [0]
+        
+
+        
         }
     },
     stock: { type: Number, default: 1 },
