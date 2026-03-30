@@ -1,12 +1,12 @@
 # Node-Group-Project
 
 ## Current Phase
-- [ ] Models
+- [x] Models
    - [x] User
-   - [ ] Order
-   - [ ] Book
+   - [x] Order
+   - [x] Book
    
-- [ ] Routes
+- [x] Routes
 
 - [ ] Middlewares
     - [ ] Authentication

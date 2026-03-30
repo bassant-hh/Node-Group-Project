@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 
 const orderSchema = new mongoose.Schema(
@@ -224,4 +224,4 @@ orderSchema.statics.getOverdueRentals = async function () {
 
 const Order = mongoose.model('Order', orderSchema);
 
-module.exports = Order;
+export default Order;
