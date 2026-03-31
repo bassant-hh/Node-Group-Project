@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import Order from '../models/Order.js';
 import { responseObj } from '../utils.js';
+import { errorMiddleware } from './errorMiddleware.js';
 
 export const isLogin = async (req, res, next) => {
     try {
@@ -17,7 +18,7 @@ export const isLogin = async (req, res, next) => {
         if (!req.user) {
             return res.status(401).json(responseObj(401, "Unauthorized: User not found"));
         }
-        next();
+        next(errorMiddleware);
     } catch (error) {
         return res.status(401).json(responseObj(401, "Unauthorized: Invalid token"));
     }
@@ -25,7 +26,7 @@ export const isLogin = async (req, res, next) => {
 
 export const isAdmin = (req, res, next) => {
     if (req.user && req.user.role === 'ADMIN') {
-        next();
+        next(errorMiddleware);
     } else {
         res.status(403).json(responseObj(403, "Forbidden: Admins only"));
     }
@@ -33,7 +34,7 @@ export const isAdmin = (req, res, next) => {
 
 export const isOwner = (req, res, next) => {
     if (req.user && req.user._id.toString() === req.params.id) {
-        next();
+        next(errorMiddleware);
     } else {
         res.status(403).json(responseObj(403, "Forbidden: You are not the owner"));
     }
@@ -50,11 +51,11 @@ export const haveAccess = async (req, res, next) => {
         });
 
         if (hasOrder) {
-            next();
+            next(errorMiddleware);
         } else {
             res.status(403).json(responseObj(403, "Forbidden: You don't have access to this book"));
         }
     } catch (error) {
-        next();
+        next(errorMiddleware);
     }
 };

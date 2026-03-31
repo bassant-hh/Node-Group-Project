@@ -1,8 +1,6 @@
 import express from 'express';
-<<<<<<< HEAD
 const router = express.Router();
-import orders from '../controllers/orderController.js';
-=======
+
 import { 
     get_orders, 
     get_order_by_id, 
@@ -11,16 +9,11 @@ import {
     cancel_order,
     return_rental_books
 } from '../controllers/orderController.js';
-import { protect } from '../middleware/authMiddleware.js';
-
-const router = express.Router();
->>>>>>> origin/controllers
+import { isLogin } from '../middleware/authMiddleware.js';
 
 // Apply authentication middleware to all routes
-router.use(protect);
+router.use(isLogin);
 
-<<<<<<< HEAD
-=======
 // Main order routes
 router.get('/', get_orders);              // Get all orders (admin: all, user: their own)
 router.get('/:id', get_order_by_id);      // Get single order by ID
@@ -31,5 +24,4 @@ router.put('/:id/status', update_order_status);   // Update order status (admin 
 router.delete('/:id', cancel_order);              // Cancel order (user only)
 router.put('/:id/return', return_rental_books);   // Return rental books
 
->>>>>>> origin/controllers
 export default router;
