@@ -10,7 +10,7 @@ const add_order = (req, res) => {
     res.status(201).json({ message: "Add a new order" });
 };
 
-module.exports = {
+export default {
     get_orders,
     get_order_by_id,
     add_order

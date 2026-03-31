@@ -4,6 +4,6 @@ function responseObj(status,message,additionalData = {}) {
     };
 }
 
-module.export = {
+export {
     responseObj
 };

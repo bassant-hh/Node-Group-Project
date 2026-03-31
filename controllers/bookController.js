@@ -22,7 +22,7 @@ const delete_books = (req, res) => {
     res.status(200).json({ message: "Delete multiple books" });
 };
 
-module.exports = {
+export default {
     get_books,
     get_book_by_id,
     add_book,

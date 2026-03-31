@@ -9,13 +9,13 @@
 - [x] Routes
 
 - [ ] Middlewares
-    - [ ] Authentication
+    - [x] Authentication
     - [ ] Errors
  
 - [ ] Controllers
     - [ ] UserController
-    - [ ] OrderController
-    - [ ] BookController
+    - [x] OrderController
+    - [x] BookController
  
 - [ ] Db Config
  

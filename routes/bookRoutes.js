@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const books = require('../controllers/bookController');
+import books from '../controllers/bookController.js';
 
 router.get('/', books.get_books);
 router.get('/:id', books.get_book_by_id);
@@ -9,4 +9,4 @@ router.patch('/:id', books.update_book);
 router.delete('/:id', books.delete_book);
 router.delete('/', books.delete_books);
 
-module.exports = router;
+export default router;
