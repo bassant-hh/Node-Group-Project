@@ -11,7 +11,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/books', bookRoutes);
 app.use('/api/orders', orderRoutes);
 
-app.use((req, res, next) => {
+app.use((_,res) => {
     res.status(404).json({ message: "This route does not exist" });
 });
 

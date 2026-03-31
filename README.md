@@ -12,8 +12,8 @@
     - [x] Authentication
     - [ ] Errors
  
-- [ ] Controllers
-    - [ ] UserController
+- [x] Controllers
+    - [x] UserController
     - [x] OrderController
     - [x] BookController
  
