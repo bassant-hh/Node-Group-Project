@@ -1,5 +1,5 @@
-const Order = require('../models/Order');
-const Book = require('../models/Book');
+import Order from '../models/Order.js';
+import Book from '../models/Book.js';
 
 // Helper: Update book stock
 const updateBookStock = async (books, operation) => {
@@ -22,7 +22,7 @@ const updateBookStock = async (books, operation) => {
 // @desc    Get all orders (admin: all, user: their own)
 // @route   GET /api/orders
 // @access  Private
-const get_orders = async (req, res) => {
+export const get_orders = async (req, res) => {
     try {
         const filter = req.user.role !== 'admin' ? { userId: req.user.id } : {};
         
@@ -39,7 +39,7 @@ const get_orders = async (req, res) => {
 // @desc    Get single order by ID
 // @route   GET /api/orders/:id
 // @access  Private
-const get_order_by_id = async (req, res) => {
+export const get_order_by_id = async (req, res) => {
     try {
         const order = await Order.findById(req.params.id)
             .populate('userId', 'name email')
@@ -61,7 +61,7 @@ const get_order_by_id = async (req, res) => {
 // @desc    Create new order
 // @route   POST /api/orders
 // @access  Private
-const add_order = async (req, res) => {
+export const add_order = async (req, res) => {
     try {
         const { books, couponCode, shippingAddress, paymentMethod } = req.body;
         
@@ -127,7 +127,7 @@ const add_order = async (req, res) => {
 // @desc    Update order status (admin only)
 // @route   PUT /api/orders/:id/status
 // @access  Private/Admin
-const update_order_status = async (req, res) => {
+export const update_order_status = async (req, res) => {
     try {
         if (req.user.role !== 'admin') {
             return res.status(403).json({ success: false, message: 'Admin only' });
@@ -149,7 +149,7 @@ const update_order_status = async (req, res) => {
 // @desc    Cancel order
 // @route   DELETE /api/orders/:id
 // @access  Private
-const cancel_order = async (req, res) => {
+export const cancel_order = async (req, res) => {
     try {
         const order = await Order.findById(req.params.id);
         
@@ -174,7 +174,7 @@ const cancel_order = async (req, res) => {
 // @desc    Return rental books
 // @route   PUT /api/orders/:id/return
 // @access  Private
-const return_rental_books = async (req, res) => {
+export const return_rental_books = async (req, res) => {
     try {
         const order = await Order.findById(req.params.id);
         
@@ -198,13 +198,4 @@ const return_rental_books = async (req, res) => {
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
-};
-
-module.exports = {
-    get_orders,
-    get_order_by_id,
-    add_order,
-    update_order_status,
-    cancel_order,
-    return_rental_books
 };
