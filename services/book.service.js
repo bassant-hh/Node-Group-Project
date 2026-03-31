@@ -15,6 +15,7 @@ export const createBook = async (bookData) => {
     }
 
     // 2. حفظ في الداتابيز
+
     const book = await Book.create(bookData);
     return book;
 };
@@ -91,4 +92,5 @@ export const deleteMultipleBooks = async (ids) => {
         throw error;
     }
     return await Book.deleteMany({ _id: { $in: ids } });
+
 };
