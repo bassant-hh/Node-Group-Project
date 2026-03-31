@@ -1,32 +1,74 @@
-const get_books = (req, res) => {
-    res.status(200).json({ message: "Get all books" });
-};
+// import * as bookService from '../services/book.service.js';
+// import { catchAsync } from '../utils/catchAsync.js';
 
-const get_book_by_id = (req, res) => {
-    res.status(200).json({ message: `Get book with ID: ${req.params.id}` });
-};
 
-const add_book = (req, res) => {
-    res.status(201).json({ message: "Add a new book" });
-};
+const get_books = catchAsync(async (req, res, next) => {
+    
+    const books = await bookService.getAllBooks(req.query);
+    
+    res.status(200).json({
+        success: true,
+        count: books.length,
+        data: books
+    });
+});
 
-const update_book = (req, res) => {
-    res.status(200).json({ message: `Update book with ID: ${req.params.id}` });
-};
 
-const delete_book = (req, res) => {
-    res.status(200).json({ message: `Delete book with ID: ${req.params.id}` });
-};
+ const get_book_by_id = catchAsync(async (req, res, next) => {
+    const book = await bookService.getBookById(req.params.id);
+    
+    res.status(200).json({
+        success: true,
+        data: book
+    });
+});
 
-const delete_books = (req, res) => {
-    res.status(200).json({ message: "Delete multiple books" });
-};
 
-module.exports = {
+const add_book = catchAsync(async (req, res, next) => {
+    const newBook = await bookService.createBook(req.body);
+    
+    res.status(201).json({
+        success: true,
+        message: "the book has been added successfully",
+        data: newBook
+    });
+});
+
+const update_book = catchAsync(async (req, res, next) => {
+    const updatedBook = await bookService.updateBook(req.params.id, req.body);
+    
+    res.status(200).json({
+        success: true,
+        message: "The book data has been successfully updated",
+        data: updatedBook
+    });
+});
+
+const delete_book = catchAsync(async (req, res, next) => {
+    await bookService.deleteBook(req.params.id);
+    
+    res.status(200).json({
+        success: true,
+        message: "The book has been permanently deleted from the system."
+    });
+});
+
+
+const delete_books = catchAsync(async (req, res, next) => {
+    const result = await bookService.deleteMultipleBooks(req.body.ids);
+    
+    res.status(200).json({
+        success: true,
+        message: `${result.deletedCount} was successfully deleted`
+    });
+});
+
+
+export {
     get_books,
     get_book_by_id,
-    add_book,
     update_book,
+    add_book,
     delete_book,
-    delete_books
-};
+    delete_books 
+}
