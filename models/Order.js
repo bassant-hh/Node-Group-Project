@@ -1,10 +1,10 @@
 import mongoose from 'mongoose';
+const Schema = mongoose.Schema;
 
-
-const orderSchema = new mongoose.Schema(
+const orderSchema = new Schema(
   {
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'User',
       required: [true, 'User ID is required'],
       index: true,
@@ -12,7 +12,7 @@ const orderSchema = new mongoose.Schema(
     books: [
       {
         bookId: {
-          type: mongoose.Schema.Types.ObjectId,
+          type: Schema.Types.ObjectId,
           ref: 'Book',
           required: [true, 'Book ID is required'],
         },
