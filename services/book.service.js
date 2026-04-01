@@ -13,7 +13,7 @@ export const createBook = async (bookData) => {
     return book;
 };
 
-export const getAllBooks = async (filters) => {
+export const getAllBooks = async (filters,sort='asc',sortby='createdAt',page=1) => {
     const query = {};
     if (filters.category) {
         query.category = filters.category;
@@ -22,8 +22,15 @@ export const getAllBooks = async (filters) => {
     if (filters.seriesSlug) {
         query['series.seriesSlug'] = filters.seriesSlug;
     }
+    
+    if( filters.s ) {
+        query.bookName = {$regex: filters.s,options: 'i'};
+    }
 
-    return await Book.find(query).sort({ createdAt: -1 }); 
+    const sortOpe = {};
+    sortOpe[sortby] = sort == 'asc' ? 1:-1;
+    
+    return await Book.find(query).sort(sortOpe).limit(10).skip((page - 1) * 10); 
 };
 
 export const getBookById = async (id) => {

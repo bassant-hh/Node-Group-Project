@@ -1,11 +1,11 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 
-import { responseObj } from './../utils.js';
+import { responseObj , asyncHandler } from './../utils.js';
 
 import User from './../models/User.js';
 
-const register = async (req, res) => {
+const register = asyncHandler(async (req, res) => {
     //Check Valid Inputs
     if( req.body && req.body.username && req.body.firstName && req.body.lastName && req.body.email && req.body.password ) {
         
@@ -30,27 +30,30 @@ const register = async (req, res) => {
             return;
         }
         
-        const token = jwt.sign({
-			name: req.body.username,
-			role: 'USER'
-		},process.env.JWT_SECRET);
-        
-        const refreshToken = jwt.sign({
-            username: req.body.username,
-            role: 'USER'
-        },process.env.JWT_SECRET);
-        
         const newUser = new User({
             username: req.body.username,
             firstName: req.body.firstName,
             lastName: req.body.lastName,
             email: req.body.email,
-            password: bcrypt.hash(req.body.password,10),
+            password: await bcrypt.hash(req.body.password,10),
             role: 'USER',
-            token,
-            refreshToken
         });
-        
+
+        const token = jwt.sign({
+            id: newUser._id, 
+			username: newUser.username,
+			role: 'USER'
+		},process.env.JWT_SECRET);
+
+        const refreshToken = jwt.sign({
+            id: newUser._id,
+            username: newUser.username,
+            role: 'USER'
+        },process.env.JWT_SECRET);
+
+        newUser.token = token;
+        newUser.refreshToken = refreshToken;
+
         await newUser.save();
         
 		if( newUser ) {
@@ -62,23 +65,25 @@ const register = async (req, res) => {
     }else {
         res.status(400).json(responseObj(400,"Invalid Inputs"));
     }
-};
+});
 
-const login = async (req, res) => {
+const login = asyncHandler(async (req, res) => {
     if( req.body && (req.body.username || req.body.email) && req.body.password ) {
         
         const user = await User.findOne({
             $or: [{username: req.body?.username},{email: req.body?.email}]
         });
         
-        if( user && req.body.password && bcrypt.compare(user.password,req.body.password) ) {
+        if( user && req.body.password && await bcrypt.compare(req.body.password, user.password) ) {
             const token  = jwt.sign({
-                username: req.body.username,
+                id: user._id,
+                username: user.username,
                 role: user.role
             },process.env.JWT_SECRET);
             
             const refreshToken = jwt.sign({
-                username: req.body.username,
+                id: user._id,
+                username: user.username,
                 role: user.role
             },process.env.JWT_SECRET);
             
@@ -94,9 +99,9 @@ const login = async (req, res) => {
     }else {
         res.status(400).json(responseObj(400,"Invalid Inputs"));
     }
-};
+});
 
-const refresh_token = async (req, res) => {
+const refresh_token = asyncHandler(async (req, res) => {
     if( req.body && req.body.refresh_token && req.user?.id ) {
         const user = await User.findById(req.user.id);
         
@@ -123,9 +128,9 @@ const refresh_token = async (req, res) => {
     }else {
         res.status(400).json(responseObj(400,"Invalid Request"));
     }
-};
+});
 
-const logout = async (req, res) => {
+const logout = asyncHandler(async (req, res) => {
     if( req.user && req.user.id ) {
         const user = await User.findById(req.user.id);
         if( user ) {
@@ -141,9 +146,9 @@ const logout = async (req, res) => {
     }else {
         res.status(400).json(responseObj(400,"Invalid Request"));
     }
-};
+});
 
-const update_info = async (req, res) => {
+const update_info =asyncHandler( async (req, res) => {
     if( ! req.body ) {
         res.status(400).json(responseObj(400,"Invalid Inputs"));
         return;
@@ -159,7 +164,7 @@ const update_info = async (req, res) => {
         }
         
         if( req.body.password ) {
-            const newPasswordHash = bcrypt.hash(req.body.password,10);
+            const newPasswordHash = await bcrypt.hash(req.body.password,10);
             
             user.password = newPasswordHash;
         }
@@ -170,7 +175,7 @@ const update_info = async (req, res) => {
     }else{
         res.status(400).json(responseObj(400,"Invalid Request"));
     }
-};
+});
 
 export default {
     register,

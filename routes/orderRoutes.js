@@ -10,18 +10,19 @@ import {
     return_rental_books
 } from '../controllers/orderController.js';
 import { isLogin } from '../middleware/authMiddleware.js';
+import { errorMiddleware } from '../middleware/errorMiddleware.js';
 
 // Apply authentication middleware to all routes
 router.use(isLogin);
 
 // Main order routes
-router.get('/', get_orders);              // Get all orders (admin: all, user: their own)
-router.get('/:id', get_order_by_id);      // Get single order by ID
-router.post('/', add_order);              // Create new order
+router.get('/', errorMiddleware,get_orders,errorMiddleware);              // Get all orders (admin: all, user: their own)
+router.get('/:id', errorMiddleware,get_order_by_id,errorMiddleware);      // Get single order by ID
+router.post('/', errorMiddleware,add_order,errorMiddleware);              // Create new order
 
 // Additional order routes
-router.put('/:id/status', update_order_status);   // Update order status (admin only)
-router.delete('/:id', cancel_order);              // Cancel order (user only)
-router.put('/:id/return', return_rental_books);   // Return rental books
+router.put('/:id/status', errorMiddleware,update_order_status,errorMiddleware);   // Update order status (admin only)
+router.delete('/:id', errorMiddleware,cancel_order,errorMiddleware);              // Cancel order (user only)
+router.put('/:id/return', errorMiddleware,return_rental_books,errorMiddleware);   // Return rental books
 
 export default router;
