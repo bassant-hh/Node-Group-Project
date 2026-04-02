@@ -1,93 +1,83 @@
-import Book from '../models/book.model.js';
 
-/**
- * @desc    إنشاء كتاب جديد مع معالجة الـ Slug تلقائياً
- */
+import Book from '../models/Book.js';
 export const createBook = async (bookData) => {
     // 1. منطق الـ Slug: لو الـ Admin بعت اسم سلسلة، بنحوله لـ Slug برمجياً
     if (bookData.series && bookData.series.seriesName) {
         bookData.series.seriesSlug = bookData.series.seriesName
             .toLowerCase()
             .trim()
-            .replace(/[^\w\s-]/g, '') // حذف الرموز الغريبة
-            .replace(/[\s_-]+/g, '-')  // تحويل المسافات لشرطات
-            .replace(/^-+|-+$/g, '');  // حذف الشرطات من الأطراف
+
+            .replace(/[^\w\s-]/g, '') 
+            .replace(/[\s_-]+/g, '-')  
+            .replace(/^-+|-+$/g, ''); 
     }
 
-    // 2. حفظ في الداتابيز
 
     const book = await Book.create(bookData);
     return book;
 };
 
-/**
- * @desc    جلب كل الكتب مع الفلترة (Category أو Series)
- */
-export const getAllBooks = async (filters) => {
-    const query = {};
 
-    // فلترة بالتصنيف
+export const getAllBooks = async (filters,sort='asc',sortby='createdAt',page=1) => {
+    const query = {};
     if (filters.category) {
         query.category = filters.category;
     }
 
-    // فلترة بالسلسلة (باستخدام الـ Slug اللي عملناه)
     if (filters.seriesSlug) {
         query['series.seriesSlug'] = filters.seriesSlug;
     }
+    
+    if( filters.s ) {
+        query.bookName = {$regex: filters.s,options: 'i'};
+    }
 
-    return await Book.find(query).sort({ createdAt: -1 }); // ترتيب من الأحدث للأقدم
+    const sortOpe = {};
+    sortOpe[sortby] = sort == 'asc' ? 1:-1;
+    
+    return await Book.find(query).sort(sortOpe).limit(10).skip((page - 1) * 10); 
 };
 
-/**
- * @desc    جلب كتاب واحد بالـ ID
- */
 export const getBookById = async (id) => {
     const book = await Book.findById(id);
     if (!book) {
-        const error = new Error('عفواً، هذا الكتاب غير موجود في المكتبة');
+        const error = new Error('Sorry, the book you are looking for does not exist');
         error.statusCode = 404;
         throw error;
     }
     return book;
 };
 
-/**
- * @desc    تحديث بيانات كتاب
- */
+
 export const updateBook = async (id, updateData) => {
     const updatedBook = await Book.findByIdAndUpdate(id, updateData, {
-        new: true,           // يرجع البيانات بعد التعديل مش قبله
-        runValidators: true  // يطبق شروط الـ Model (زي الـ min price) أثناء التعديل
+        new: true,           
+        runValidators: true 
     });
 
     if (!updatedBook) {
-        const error = new Error('فشل التحديث، الكتاب غير موجود');
+        const error = new Error('Failed to update the book, it does not exist');
         error.statusCode = 404;
         throw error;
     }
     return updatedBook;
 };
 
-/**
- * @desc    حذف كتاب واحد
- */
+
 export const deleteBook = async (id) => {
     const book = await Book.findByIdAndDelete(id);
     if (!book) {
-        const error = new Error('لا يمكن الحذف، الكتاب غير موجود بالفعل');
+        const error = new Error('Failed to delete the book, it does not exist');
         error.statusCode = 404;
         throw error;
     }
     return book;
 };
 
-/**
- * @desc    حذف مجموعة كتب (Batch Delete)
- */
+
 export const deleteMultipleBooks = async (ids) => {
     if (!ids || !Array.isArray(ids)) {
-        const error = new Error('يرجى تحديد قائمة الكتب المراد حذفها');
+        const error = new Error('Failed to delete books, invalid IDs provided');
         error.statusCode = 400;
         throw error;
     }

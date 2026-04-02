@@ -1,6 +1,8 @@
 import Order from '../models/Order.js';
 import Book from '../models/Book.js';
 
+import { responseObj } from './../utils.js';
+
 // Helper: Update book stock
 const updateBookStock = async (books, operation) => {
     for (const item of books) {
@@ -24,15 +26,26 @@ const updateBookStock = async (books, operation) => {
 // @access  Private
 export const get_orders = async (req, res) => {
     try {
-        const filter = req.user.role !== 'admin' ? { userId: req.user.id } : {};
+        const filter = req.user.role !== 'ADMIN' ? { userId: req.user._id } : {};
         
-        const orders = await Order.find(filter)
+        const sortOpe = {};
+        const sort = req.sort ? req.sort:'asc';
+        const sortby = req.sortby ? req.sortby:'createdAt';
+        sortOpe[sortby] = sort == 'asc' ? 1:-1;
+        
+        const page = req.page ? req.page:1;
+        
+        const orders = await Order.find(filter).sort(sortOpe).limit(10).skip((page - 1) * 10)
             .populate('userId', 'name email')
             .populate('books.bookId', 'title author price');
         
-        res.status(200).json({ success: true, count: orders.length, data: orders });
+        res.status(200).json(responseObj(200,"Orders Retrived Successfully",{
+            success: true,
+            count: orders.length,
+            data: orders
+        }));
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json(responseObj(500,error.message,{ success: false }));
     }
 };
 
@@ -45,16 +58,11 @@ export const get_order_by_id = async (req, res) => {
             .populate('userId', 'name email')
             .populate('books.bookId', 'title author');
         
-        if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+        if (!order) return res.status(404).json(responseObj(404,'Order not found',{ success: false }));
         
-        // Check authorization
-        if (req.user.role !== 'admin' && order.userId._id.toString() !== req.user.id) {
-            return res.status(403).json({ success: false, message: 'Access denied' });
-        }
-        
-        res.status(200).json({ success: true, data: order });
+        res.status(200).json(responseObj(200,"Order Retrived Successfully",{ success: true, data: order }));
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json(responseObj(500,error.message,{ success: false }));
     }
 };
 
@@ -66,7 +74,7 @@ export const add_order = async (req, res) => {
         const { books, couponCode, shippingAddress, paymentMethod } = req.body;
         
         if (!books || books.length === 0) {
-            return res.status(400).json({ success: false, message: 'No books in order' });
+            return res.status(400).json(responseObj(400,"No books in order",{ success: false }));
         }
         
         // Calculate subtotal
@@ -75,7 +83,7 @@ export const add_order = async (req, res) => {
         
         for (const item of books) {
             const book = await Book.findById(item.bookId);
-            if (!book) return res.status(404).json({ success: false, message: `Book ${item.bookId} not found` });
+            if (!book) return res.status(404).json(responseObj(404,`Book ${item.bookId} not found`,{ success: false  }));
             
             const price = item.price || book.price;
             enrichedBooks.push({
@@ -118,9 +126,9 @@ export const add_order = async (req, res) => {
         const populatedOrder = await Order.findById(order._id)
             .populate('books.bookId', 'title author');
         
-        res.status(201).json({ success: true, message: 'Order created', data: populatedOrder });
+        res.status(201).json(responseObj(201,'Order created',{ success: true, data: populatedOrder }));
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json(responseObj(500,error.message,{ success: false }));
     }
 };
 
@@ -129,20 +137,16 @@ export const add_order = async (req, res) => {
 // @access  Private/Admin
 export const update_order_status = async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ success: false, message: 'Admin only' });
-        }
-        
         const order = await Order.findById(req.params.id);
-        if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+        if (!order) return res.status(404).json(responseObj(404,'Order not found',{ success: false }));
         
         order.orderStatus = req.body.orderStatus || order.orderStatus;
         order.paymentStatus = req.body.paymentStatus || order.paymentStatus;
         
         await order.save();
-        res.status(200).json({ success: true, data: order });
+        res.status(200).json(responseObj(200,'Order Retrived Successfully',{ success: true, data: order }));
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json(responseObj(500,error.message,{ success: false }));
     }
 };
 
@@ -153,21 +157,19 @@ export const cancel_order = async (req, res) => {
     try {
         const order = await Order.findById(req.params.id);
         
-        if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
-        if (order.userId.toString() !== req.user.id) {
-            return res.status(403).json({ success: false, message: 'Not your order' });
-        }
+        if (!order) return res.status(404).json(responseObj(404,'',{ success: false, message: 'Order not found' }));
+
         if (order.orderStatus !== 'pending') {
-            return res.status(400).json({ success: false, message: 'Can only cancel pending orders' });
+            return res.status(400).json(responseObj(400,'Can only cancel pending orders',{ success: false }));
         }
         
         await updateBookStock(order.books, 'increase');
         order.orderStatus = 'cancelled';
         await order.save();
         
-        res.status(200).json({ success: true, message: 'Order cancelled' });
+        res.status(200).json(responseObj(200,'Order cancelled',{ success: true, message: 'Order cancelled' }));
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json(responseObj(500,error.message,{ success: false }));
     }
 };
 

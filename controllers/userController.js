@@ -1,11 +1,11 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 
-import { responseObj } from './../utils.js';
+import { responseObj , asyncHandler } from './../utils.js';
 
 import User from './../models/User.js';
 
-const register = async (req, res) => {
+export const register = asyncHandler(async (req, res) => {
     //Check Valid Inputs
     if( req.body && req.body.username && req.body.firstName && req.body.lastName && req.body.email && req.body.password ) {
         
@@ -30,27 +30,34 @@ const register = async (req, res) => {
             return;
         }
         
-        const token = jwt.sign({
-			name: req.body.username,
-			role: 'USER'
-		},process.env.JWT_SECRET);
-        
-        const refreshToken = jwt.sign({
-            username: req.body.username,
-            role: 'USER'
-        },process.env.JWT_SECRET);
-        
         const newUser = new User({
             username: req.body.username,
             firstName: req.body.firstName,
             lastName: req.body.lastName,
             email: req.body.email,
-            password: bcrypt.hash(req.body.password,10),
+            password: await bcrypt.hash(req.body.password,10),
             role: 'USER',
-            token,
-            refreshToken
         });
-        
+
+        const token = jwt.sign({
+            id: newUser._id, 
+			username: newUser.username,
+			role: 'USER'
+		},process.env.JWT_SECRET,{
+            expiresIn: 60 * 60 * 24
+        });
+
+        const refreshToken = jwt.sign({
+            id: newUser._id,
+            username: newUser.username,
+            role: 'USER'
+        },process.env.JWT_SECRET,{
+            expiresIn: 60 * 60 * 24 * 7
+        });
+
+        newUser.token = token;
+        newUser.refreshToken = refreshToken;
+
         await newUser.save();
         
 		if( newUser ) {
@@ -62,23 +69,25 @@ const register = async (req, res) => {
     }else {
         res.status(400).json(responseObj(400,"Invalid Inputs"));
     }
-};
+});
 
-const login = async (req, res) => {
+export const login = asyncHandler(async (req, res) => {
     if( req.body && (req.body.username || req.body.email) && req.body.password ) {
         
         const user = await User.findOne({
             $or: [{username: req.body?.username},{email: req.body?.email}]
         });
         
-        if( user && req.body.password && bcrypt.compare(user.password,req.body.password) ) {
+        if( user && req.body.password && await bcrypt.compare(req.body.password, user.password) ) {
             const token  = jwt.sign({
-                username: req.body.username,
+                id: user._id,
+                username: user.username,
                 role: user.role
             },process.env.JWT_SECRET);
             
             const refreshToken = jwt.sign({
-                username: req.body.username,
+                id: user._id,
+                username: user.username,
                 role: user.role
             },process.env.JWT_SECRET);
             
@@ -94,11 +103,11 @@ const login = async (req, res) => {
     }else {
         res.status(400).json(responseObj(400,"Invalid Inputs"));
     }
-};
+});
 
-const refresh_token = async (req, res) => {
-    if( req.body && req.body.refresh_token && req.user?.id ) {
-        const user = await User.findById(req.user.id);
+export const refresh_token = asyncHandler(async (req, res) => {
+    if( req.body && req.body.refresh_token ) {
+        const user = await User.find({where: {refreshToken: req.body.refresh_token}});
         
         if( user && user.refreshToken == req.body.refresh_token ) {
             const newToken = jwt.sign({
@@ -123,9 +132,9 @@ const refresh_token = async (req, res) => {
     }else {
         res.status(400).json(responseObj(400,"Invalid Request"));
     }
-};
+});
 
-const logout = async (req, res) => {
+export const logout = asyncHandler(async (req, res) => {
     if( req.user && req.user.id ) {
         const user = await User.findById(req.user.id);
         if( user ) {
@@ -141,9 +150,9 @@ const logout = async (req, res) => {
     }else {
         res.status(400).json(responseObj(400,"Invalid Request"));
     }
-};
+});
 
-const update_info = async (req, res) => {
+export const update_info =asyncHandler( async (req, res) => {
     if( ! req.body ) {
         res.status(400).json(responseObj(400,"Invalid Inputs"));
         return;
@@ -159,7 +168,7 @@ const update_info = async (req, res) => {
         }
         
         if( req.body.password ) {
-            const newPasswordHash = bcrypt.hash(req.body.password,10);
+            const newPasswordHash = await bcrypt.hash(req.body.password,10);
             
             user.password = newPasswordHash;
         }
@@ -170,12 +179,52 @@ const update_info = async (req, res) => {
     }else{
         res.status(400).json(responseObj(400,"Invalid Request"));
     }
+});
+
+
+
+
+export const update_reading_progress = async (req, res) => {
+    const { bookId, currentPage, totalPages } = req.body;
+    const userId = req.user?._id || req.body.userId; 
+
+    if (bookId && currentPage && totalPages && userId) {
+        try {
+            const user = await User.findById(userId);
+            if (!user) return res.status(404).json({ message: "User Not Found" });
+
+            let progress = user.readingProgress.find(p => p.bookId.toString() === bookId);
+
+            if (!progress) {
+                user.readingProgress.push({ bookId, lastPage: currentPage });
+            } else {
+                progress.lastPage = currentPage;
+                if (currentPage >= totalPages && !progress.isCompleted) {
+                    progress.isCompleted = true;
+                    user.completedBooksCount = (user.completedBooksCount || 0) + 1;
+                    if (user.completedBooksCount === 2) {
+                        user.wallet.balance = (user.wallet.balance || 0) + 100;
+                    }
+                }
+            }
+
+            await user.save();
+            return res.status(200).json({
+                status: 200,
+                message: "Progress Updated Successfully",
+                data: { balance: user.wallet.balance, completedBooks: user.completedBooksCount }
+            });
+        } catch (error) {
+            return res.status(500).json({ message: "Server Error", error: error.message });
+        }
+    } else {
+        return res.status(400).json({
+            status: 400,
+            message: "Missing Fields",
+            debug: { hasBookId: !!bookId, hasPage: !!currentPage, hasTotal: !!totalPages, hasUser: !!userId }
+        });
+    }
 };
 
-export default {
-    register,
-    login,
-    refresh_token,
-    logout,
-    update_info
-};
+
+
