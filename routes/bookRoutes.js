@@ -8,11 +8,11 @@ import { errorMiddleware } from './../middleware/errorMiddleware.js';
 
 const router = express.Router();
 
-router.get('/', errorMiddleware,search,pagination,sort,sortBy(['title','createdAt','pages','price']),errorMiddleware,get_books);
-router.get('/:id', errorMiddleware,isLogin,haveAccess,get_book_by_id,errorMiddleware);
-router.post('/', errorMiddleware,isLogin,isAdmin,add_book,errorMiddleware);
-router.patch('/:id', errorMiddleware,isLogin,isAdmin,update_book,errorMiddleware);
-router.delete('/:id', errorMiddleware,isLogin,isAdmin,delete_book,errorMiddleware);
-router.delete('/', errorMiddleware,isLogin,isAdmin,delete_books,errorMiddleware);
+router.get('/', search,pagination,sort,sortBy(['title','createdAt','pages','price']),get_books);
+router.get('/:id', isLogin,haveAccess,get_book_by_id);
+router.post('/', isLogin,isAdmin,add_book);
+router.patch('/:id', isLogin,isAdmin,update_book);
+router.delete('/:id', isLogin,isAdmin,delete_book);
+router.delete('/', isLogin,isAdmin,delete_books);
 
 export default router;
