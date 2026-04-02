@@ -21,9 +21,7 @@ const updateBookStock = async (books, operation) => {
     }
 };
 
-// @desc    Get all orders (admin: all, user: their own)
-// @route   GET /api/orders
-// @access  Private
+
 export const get_orders = async (req, res) => {
     try {
         const filter = req.user.role !== 'ADMIN' ? { userId: req.user._id } : {};

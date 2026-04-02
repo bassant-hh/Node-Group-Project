@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const orderSchema = new Schema(
   {
     userId: {
-      type: Schema.Types.ObjectId,
+      type: String,
       ref: 'User',
       required: [true, 'User ID is required'],
       index: true,
@@ -12,7 +12,7 @@ const orderSchema = new Schema(
     books: [
       {
         bookId: {
-          type: Schema.Types.ObjectId,
+          type: String,
           ref: 'Book',
           required: [true, 'Book ID is required'],
         },
