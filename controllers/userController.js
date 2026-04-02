@@ -135,8 +135,8 @@ export const refresh_token = asyncHandler(async (req, res) => {
 });
 
 export const logout = asyncHandler(async (req, res) => {
-    if( req.user && req.user.id ) {
-        const user = await User.findById(req.user.id);
+    if( req.user && req.user._id ) {
+        const user = await User.findById(req.user._id);
         if( user ) {
             user.token = '';
             user.refreshToken = '';

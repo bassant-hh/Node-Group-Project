@@ -6,7 +6,7 @@ import {register,login,refresh_token,logout,update_info} from '../controllers/us
 router.post('/register', register);
 router.post('/login', login);
 router.post('/refresh-token', refresh_token);
-router.post('/logout', isLogin, logout);
-router.patch('/update-info', isLogin,isOwner, update_info); 
+router.get('/logout', isLogin, logout);
+router.put('/update-info', isLogin,isOwner, update_info); 
 
 export default router;

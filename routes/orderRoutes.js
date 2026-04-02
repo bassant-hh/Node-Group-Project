@@ -16,7 +16,7 @@ import { errorMiddleware } from '../middleware/errorMiddleware.js';
 router.use(isLogin);
 
 // Main order routes
-router.get('/', isAdmin,get_orders);              // Get all orders (admin: all, user: their own)
+router.get('/', isAdmin,get_orders);      // Get all orders (admin: all, user: their own)
 router.get('/:id', get_order_by_id);      // Get single order by ID
 router.post('/', add_order);              // Create new order
 

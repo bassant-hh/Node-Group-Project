@@ -11,8 +11,7 @@ const router = express.Router();
 router.get('/', search,pagination,sort,sortBy(['title','createdAt','pages','price']),get_books);
 router.get('/:id', isLogin,haveAccess,get_book_by_id);
 router.post('/', isLogin,isAdmin,add_book);
-router.patch('/:id', isLogin,isAdmin,update_book);
+router.put('/:id', isLogin,isAdmin,update_book);
 router.delete('/:id', isLogin,isAdmin,delete_book);
-router.delete('/', isLogin,isAdmin,delete_books);
 
 export default router;
