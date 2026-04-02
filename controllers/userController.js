@@ -6,6 +6,7 @@ import { responseObj } from './../utils.js';
 import User from './../models/User.js';
 
 const register = async (req, res) => {
+    console.log("--- DEBUG START ---");
     //Check Valid Inputs
     if( req.body && req.body.username && req.body.firstName && req.body.lastName && req.body.email && req.body.password ) {
         
@@ -31,6 +32,7 @@ const register = async (req, res) => {
         }
         
         const token = jwt.sign({
+            id: User._id,
 			name: req.body.username,
 			role: 'USER'
 		},process.env.JWT_SECRET);
@@ -45,7 +47,7 @@ const register = async (req, res) => {
             firstName: req.body.firstName,
             lastName: req.body.lastName,
             email: req.body.email,
-            password: bcrypt.hash(req.body.password,10),
+            password: await bcrypt.hash(req.body.password,10),
             role: 'USER',
             token,
             refreshToken
@@ -71,7 +73,7 @@ const login = async (req, res) => {
             $or: [{username: req.body?.username},{email: req.body?.email}]
         });
         
-        if( user && req.body.password && bcrypt.compare(user.password,req.body.password) ) {
+        if(user && await bcrypt.compare(user.password,req.body.password)) {
             const token  = jwt.sign({
                 username: req.body.username,
                 role: user.role
@@ -159,7 +161,7 @@ const update_info = async (req, res) => {
         }
         
         if( req.body.password ) {
-            const newPasswordHash = bcrypt.hash(req.body.password,10);
+            const newPasswordHash =await  bcrypt.hash(req.body.password,10);
             
             user.password = newPasswordHash;
         }
@@ -172,10 +174,69 @@ const update_info = async (req, res) => {
     }
 };
 
+
+
+const update_reading_progress = async (req, res) => {
+    console.log("User from Token:", req.user);
+    console.log("Body Data:", req.body);
+
+    const { bookId, currentPage, totalPages } = req.body;
+    const userId = req.user?._id || req.body.userId;
+      
+    if (bookId && currentPage && totalPages && userId) {
+        try {
+            const user = await User.findById(userId);
+            if (!user) return res.status(404).json(responseObj(404, "User Not Found"));
+
+            let progress = user.readingProgress.find(p => p.bookId.toString() === bookId);
+
+            if (!progress) {
+                user.readingProgress.push({ bookId, lastPage: currentPage });
+            } else {
+                progress.lastPage = currentPage;
+                if (currentPage >= totalPages && !progress.isCompleted) {
+                    progress.isCompleted = true;
+                    user.completedBooksCount = (user.completedBooksCount || 0) + 1;
+                    if (user.completedBooksCount === 2) {
+                        user.wallet.balance = (user.wallet.balance || 0) + 100;
+                    }
+                }
+            }
+
+            await user.save();
+            return res.status(200).json(responseObj(200, "Progress Updated", {
+                balance: user.wallet.balance,
+                completedBooks: user.completedBooksCount
+            }));
+        } catch (error) {
+            return res.status(500).json(responseObj(500, "Internal Server Error", error.message));
+        }
+    } else {
+        return res.status(400).json({
+            status: 400,
+            message: "Missing Fields",
+            debug: {
+                hasBookId: !!bookId,
+                hasCurrentPage: !!currentPage,
+                hasTotalPages: !!totalPages,
+                hasUserId: !!userId
+            }
+        });
+    }
+};
+
+
+
+
+
+
+
+
 export default {
-    register,
+   register,
     login,
     refresh_token,
     logout,
-    update_info
+    update_info,
+    update_reading_progress
 };

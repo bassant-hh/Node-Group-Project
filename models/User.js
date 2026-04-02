@@ -1,4 +1,4 @@
-import mongoose from  'mongoose';
+import mongoose from 'mongoose';
 
 const UserSchema = new mongoose.Schema({
     firstName: {
@@ -6,7 +6,7 @@ const UserSchema = new mongoose.Schema({
         required: true
     },
     lastName: {
-        type:String,
+        type: String,
         required: true
     },
     email: {
@@ -21,13 +21,24 @@ const UserSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['ADMIN','USER'],
+        enum: ['ADMIN', 'USER'],
         default: 'USER'
     },
+    readingProgress: [{
+        bookId: { type: mongoose.Schema.Types.ObjectId, ref: 'Book' },
+        lastPage: { type: Number, default: 0 },
+        isCompleted: { type: Boolean, default: false }
+    }],
+
+    wallet: {
+        balance: { type: Number, default: 0 }
+    },
+
+    completedBooksCount: { type: Number, default: 0 },
     token: String,
     refreshToken: String
-},{timestamps: true});
+}, { timestamps: true });
 
-const User = mongoose.model('User',UserSchema);
+const User = mongoose.model('User', UserSchema);
 
 export default User;
