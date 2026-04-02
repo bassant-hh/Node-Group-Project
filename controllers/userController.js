@@ -5,7 +5,7 @@ import { responseObj , asyncHandler } from './../utils.js';
 
 import User from './../models/User.js';
 
-const register = asyncHandler(async (req, res) => {
+export const register = asyncHandler(async (req, res) => {
     //Check Valid Inputs
     if( req.body && req.body.username && req.body.firstName && req.body.lastName && req.body.email && req.body.password ) {
         
@@ -43,13 +43,17 @@ const register = asyncHandler(async (req, res) => {
             id: newUser._id, 
 			username: newUser.username,
 			role: 'USER'
-		},process.env.JWT_SECRET);
+		},process.env.JWT_SECRET,{
+            expiresIn: 60 * 60 * 24
+        });
 
         const refreshToken = jwt.sign({
             id: newUser._id,
             username: newUser.username,
             role: 'USER'
-        },process.env.JWT_SECRET);
+        },process.env.JWT_SECRET,{
+            expiresIn: 60 * 60 * 24 * 7
+        });
 
         newUser.token = token;
         newUser.refreshToken = refreshToken;
@@ -67,7 +71,7 @@ const register = asyncHandler(async (req, res) => {
     }
 });
 
-const login = asyncHandler(async (req, res) => {
+export const login = asyncHandler(async (req, res) => {
     if( req.body && (req.body.username || req.body.email) && req.body.password ) {
         
         const user = await User.findOne({
@@ -101,9 +105,9 @@ const login = asyncHandler(async (req, res) => {
     }
 });
 
-const refresh_token = asyncHandler(async (req, res) => {
-    if( req.body && req.body.refresh_token && req.user?.id ) {
-        const user = await User.findById(req.user.id);
+export const refresh_token = asyncHandler(async (req, res) => {
+    if( req.body && req.body.refresh_token ) {
+        const user = await User.find({where: {refreshToken: req.body.refresh_token}});
         
         if( user && user.refreshToken == req.body.refresh_token ) {
             const newToken = jwt.sign({
@@ -130,7 +134,7 @@ const refresh_token = asyncHandler(async (req, res) => {
     }
 });
 
-const logout = asyncHandler(async (req, res) => {
+export const logout = asyncHandler(async (req, res) => {
     if( req.user && req.user.id ) {
         const user = await User.findById(req.user.id);
         if( user ) {
@@ -148,7 +152,7 @@ const logout = asyncHandler(async (req, res) => {
     }
 });
 
-const update_info =asyncHandler( async (req, res) => {
+export const update_info =asyncHandler( async (req, res) => {
     if( ! req.body ) {
         res.status(400).json(responseObj(400,"Invalid Inputs"));
         return;
@@ -176,11 +180,3 @@ const update_info =asyncHandler( async (req, res) => {
         res.status(400).json(responseObj(400,"Invalid Request"));
     }
 });
-
-export default {
-    register,
-    login,
-    refresh_token,
-    logout,
-    update_info
-};
