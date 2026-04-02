@@ -7,7 +7,7 @@ router.post('/register', register);
 router.post('/login', login);
 router.post('/refresh-token', refresh_token);
 router.post('/logout', isLogin, logout);
-router.patch('/update-info', isLogin,isOwner, update_info); 
-router.patch('/update-progress', isLogin, update_reading_progress);
+router.put('/update-info', isLogin,isOwner, update_info); 
+router.put('/update-progress', isLogin, update_reading_progress);
 
 export default router;
