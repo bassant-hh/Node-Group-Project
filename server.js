@@ -26,4 +26,6 @@ app.use((_,res) => {
     res.status(404).json({ message: "This route does not exist" });
 });
 
+app.use(errorMiddleware);
+
 export default app;

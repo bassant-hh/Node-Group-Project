@@ -2,7 +2,6 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import Order from '../models/Order.js';
 import { responseObj } from '../utils.js';
-import { errorMiddleware } from './errorMiddleware.js';
 
 export const isLogin = async (req, res, next) => {
     try {
@@ -62,6 +61,6 @@ export const haveAccess = async (req, res, next) => {
             res.status(403).json(responseObj(403, "Forbidden: You don't have access to this book"));
         }
     } catch (error) {
-        next();
+        next(error);
     }
 };
