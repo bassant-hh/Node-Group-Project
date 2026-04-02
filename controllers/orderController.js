@@ -26,7 +26,14 @@ export const get_orders = async (req, res) => {
     try {
         const filter = req.user.role !== 'ADMIN' ? { userId: req.user._id } : {};
         
-        const orders = await Order.find(filter)
+        const sortOpe = {};
+        const sort = req.sort ? req.sort:'asc';
+        const sortby = req.sortby ? req.sortby:'createdAt';
+        sortOpe[sortby] = sort == 'asc' ? 1:-1;
+        
+        const page = req.page ? req.page:1;
+        
+        const orders = await Order.find(filter).sort(sortOpe).limit(10).skip((page - 1) * 10)
             .populate('userId', 'name email')
             .populate('books.bookId', 'title author price');
         

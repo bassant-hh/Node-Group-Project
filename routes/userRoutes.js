@@ -1,40 +1,13 @@
-// import express from 'express';
-// import {isLogin} from '../middleware/authMiddleware.js';
-// const router = express.Router();
-// import { protect } from '../middleware/authMiddleware.js';
-// import { 
-//   registerUser, 
-//   loginUser, 
-//   getUserProfile 
-// } from '../controllers/userController.js';
-
-// import users from '../controllers/userController.js';
-// // import { is } from 'express/lib/request.js';
-
-// router.post('/register', users.register);
-// router.post('/login', users.login);
-// router.post('/refresh-token', isLogin, users.refresh_token);
-// router.post('/logout', isLogin, users.logout);
-// router.patch('/update-info', isLogin, users.update_info); 
-
-// export default router;
-
-
 import express from 'express';
-import { protect } from '../middleware/authMiddleware.js';
-import { 
-  registerUser, 
-  loginUser, 
-  getUserProfile 
-} from '../controllers/userController.js';
-
+import {isLogin,isOwner} from '../middleware/authMiddleware.js';
 const router = express.Router();
+import {register,login,refresh_token,logout,update_info,update_reading_progress} from '../controllers/userController.js';
 
-// Public routes
-router.post('/register', registerUser);
-router.post('/login', loginUser);
-
-// Protected routes  
-router.get('/profile', protect, getUserProfile);
+router.post('/register', register);
+router.post('/login', login);
+router.post('/refresh-token', refresh_token);
+router.post('/logout', isLogin, logout);
+router.put('/update-info', isLogin,isOwner, update_info); 
+router.put('/update-progress', isLogin, update_reading_progress);
 
 export default router;

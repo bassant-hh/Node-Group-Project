@@ -5,7 +5,7 @@ import { responseObj , asyncHandler } from './../utils.js';
 
 import User from './../models/User.js';
 
-const register = asyncHandler(async (req, res) => {
+export const register = asyncHandler(async (req, res) => {
     //Check Valid Inputs
     if( req.body && req.body.username && req.body.firstName && req.body.lastName && req.body.email && req.body.password ) {
         
@@ -43,13 +43,17 @@ const register = asyncHandler(async (req, res) => {
             id: newUser._id, 
 			username: newUser.username,
 			role: 'USER'
-		},process.env.JWT_SECRET);
+		},process.env.JWT_SECRET,{
+            expiresIn: 60 * 60 * 24
+        });
 
         const refreshToken = jwt.sign({
             id: newUser._id,
             username: newUser.username,
             role: 'USER'
-        },process.env.JWT_SECRET);
+        },process.env.JWT_SECRET,{
+            expiresIn: 60 * 60 * 24 * 7
+        });
 
         newUser.token = token;
         newUser.refreshToken = refreshToken;
@@ -67,7 +71,7 @@ const register = asyncHandler(async (req, res) => {
     }
 });
 
-const login = asyncHandler(async (req, res) => {
+export const login = asyncHandler(async (req, res) => {
     if( req.body && (req.body.username || req.body.email) && req.body.password ) {
         
         const user = await User.findOne({
@@ -101,36 +105,36 @@ const login = asyncHandler(async (req, res) => {
     }
 });
 
-const refresh_token = asyncHandler(async (req, res) => {
-    if( req.body && req.body.refresh_token && req.user?.id ) {
-        const user = await User.findById(req.user.id);
-        
-        if( user && user.refreshToken == req.body.refresh_token ) {
+export const refresh_token = asyncHandler(async (req, res) => {
+    if( req.body && req.body.refresh_token ) {
+        const user = await User.find({ refreshToken: req.body.refresh_token });
+
+        if( user.length > 0 && user[0].refreshToken == req.body.refresh_token ) {
             const newToken = jwt.sign({
-                username: user.username,
-                role: user.role
+                username: user[0].username,
+                role: user[0].role
             },process.env.JWT_SECRET);
             
             const newRefreshToken = jwt.sign({
-                username: user.username,
-                role: user.role
+                username: user[0].username,
+                role: user[0].role
             },process.env.JWT_SECRET);
             
-            user.token = newToken;
-            user.refreshToken = newRefreshToken;
+            user[0].token = newToken;
+            user[0].refreshToken = newRefreshToken;
             
-            await user.save();
+            await user[0].save();
             
             res.status(200).json(responseObj(200,"Token Refreshed Successfully",{token: newToken,refreshToken: newRefreshToken}));
         }else {
-            res.status(400).json(responseObj(400,"Invalid Request"));
+            res.status(400).json(responseObj(400,"Invalid Request 1"));
         }
     }else {
-        res.status(400).json(responseObj(400,"Invalid Request"));
+        res.status(400).json(responseObj(400,"Invalid Request 2"));
     }
 });
 
-const logout = asyncHandler(async (req, res) => {
+export const logout = asyncHandler(async (req, res) => {
     if( req.user && req.user.id ) {
         const user = await User.findById(req.user.id);
         if( user ) {
@@ -148,7 +152,7 @@ const logout = asyncHandler(async (req, res) => {
     }
 });
 
-const update_info =asyncHandler( async (req, res) => {
+export const update_info =asyncHandler( async (req, res) => {
     if( ! req.body ) {
         res.status(400).json(responseObj(400,"Invalid Inputs"));
         return;
@@ -177,10 +181,50 @@ const update_info =asyncHandler( async (req, res) => {
     }
 });
 
-export default {
-    register,
-    login,
-    refresh_token,
-    logout,
-    update_info
+
+
+
+export const update_reading_progress = async (req, res) => {
+    const { bookId, currentPage, totalPages } = req.body;
+    const userId = req.user?._id || req.body.userId; 
+
+    if (bookId && currentPage && totalPages && userId) {
+        try {
+            const user = await User.findById(userId);
+            if (!user) return res.status(404).json({ message: "User Not Found" });
+
+            let progress = user.readingProgress.find(p => p.bookId.toString() === bookId);
+
+            if (!progress) {
+                user.readingProgress.push({ bookId, lastPage: currentPage });
+            } else {
+                progress.lastPage = currentPage;
+                if (currentPage >= totalPages && !progress.isCompleted) {
+                    progress.isCompleted = true;
+                    user.completedBooksCount = (user.completedBooksCount || 0) + 1;
+                    if (user.completedBooksCount === 2) {
+                        user.wallet.balance = (user.wallet.balance || 0) + 100;
+                    }
+                }
+            }
+
+            await user.save();
+            return res.status(200).json({
+                status: 200,
+                message: "Progress Updated Successfully",
+                data: { balance: user.wallet.balance, completedBooks: user.completedBooksCount }
+            });
+        } catch (error) {
+            return res.status(500).json({ message: "Server Error", error: error.message });
+        }
+    } else {
+        return res.status(400).json({
+            status: 400,
+            message: "Missing Fields",
+            debug: { hasBookId: !!bookId, hasPage: !!currentPage, hasTotal: !!totalPages, hasUser: !!userId }
+        });
+    }
 };
+
+
+
