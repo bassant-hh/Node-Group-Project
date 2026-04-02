@@ -107,30 +107,30 @@ export const login = asyncHandler(async (req, res) => {
 
 export const refresh_token = asyncHandler(async (req, res) => {
     if( req.body && req.body.refresh_token ) {
-        const user = await User.find({where: {refreshToken: req.body.refresh_token}});
-        
-        if( user && user.refreshToken == req.body.refresh_token ) {
+        const user = await User.find({ refreshToken: req.body.refresh_token });
+
+        if( user.length > 0 && user[0].refreshToken == req.body.refresh_token ) {
             const newToken = jwt.sign({
-                username: user.username,
-                role: user.role
+                username: user[0].username,
+                role: user[0].role
             },process.env.JWT_SECRET);
             
             const newRefreshToken = jwt.sign({
-                username: user.username,
-                role: user.role
+                username: user[0].username,
+                role: user[0].role
             },process.env.JWT_SECRET);
             
-            user.token = newToken;
-            user.refreshToken = newRefreshToken;
+            user[0].token = newToken;
+            user[0].refreshToken = newRefreshToken;
             
-            await user.save();
+            await user[0].save();
             
             res.status(200).json(responseObj(200,"Token Refreshed Successfully",{token: newToken,refreshToken: newRefreshToken}));
         }else {
-            res.status(400).json(responseObj(400,"Invalid Request"));
+            res.status(400).json(responseObj(400,"Invalid Request 1"));
         }
     }else {
-        res.status(400).json(responseObj(400,"Invalid Request"));
+        res.status(400).json(responseObj(400,"Invalid Request 2"));
     }
 });
 
