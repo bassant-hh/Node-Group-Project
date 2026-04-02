@@ -20,7 +20,7 @@ export const isLogin = async (req, res, next) => {
         }
         next();
     } catch (error) {
-        return res.status(401).json(responseObj(401, "Unauthorized: Invalid token",{message: error.message}));
+        return res.status(401).json(responseObj(401, "Unauthorized: Invalid token"));
     }
 };
 

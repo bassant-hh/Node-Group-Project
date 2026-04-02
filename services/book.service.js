@@ -1,17 +1,22 @@
+
 import Book from '../models/Book.js';
 export const createBook = async (bookData) => {
+    // 1. منطق الـ Slug: لو الـ Admin بعت اسم سلسلة، بنحوله لـ Slug برمجياً
     if (bookData.series && bookData.series.seriesName) {
         bookData.series.seriesSlug = bookData.series.seriesName
             .toLowerCase()
             .trim()
+
             .replace(/[^\w\s-]/g, '') 
             .replace(/[\s_-]+/g, '-')  
             .replace(/^-+|-+$/g, ''); 
     }
 
+
     const book = await Book.create(bookData);
     return book;
 };
+
 
 export const getAllBooks = async (filters,sort='asc',sortby='createdAt',page=1) => {
     const query = {};

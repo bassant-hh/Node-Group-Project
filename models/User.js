@@ -20,15 +20,26 @@ const UserSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
-    password: { 
-        type: String, 
-        required: true 
+    password: {
+        type: String,
+        required: true
     },
     role: {
         type: String,
         enum: ['ADMIN', 'USER'],
         default: 'USER'
     },
+
+    readingProgress: [{
+        bookId: { type: mongoose.Schema.Types.ObjectId, ref: 'Book' },
+        lastPage: { type: Number, default: 0 },
+        isCompleted: { type: Boolean, default: false }
+    }],
+    wallet: {
+        balance: { type: Number, default: 0 }
+    },
+    completedBooksCount: { type: Number, default: 0 },
+
     token: String,
     refreshToken: String
 }, { timestamps: true });
