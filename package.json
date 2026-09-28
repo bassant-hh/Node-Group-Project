@@ -10,7 +10,7 @@
   },
   "name": "nodeproject",
   "version": "1.0.0",
-  "description": "Group Project For Team 1 - ITI Qena MEA|RN Stack",
+  "description": "RESTful backend API for a library management system built with Node.js, Express, and MongoDB",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -18,14 +18,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/loay-ali/Node-Group-Project.git"
+    "url": "git+https://github.com/bassant-hh/Node-Group-Project.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "bugs": {
-    "url": "https://github.com/loay-ali/Node-Group-Project/issues"
+    "url": "https://github.com/bassant-hh/Node-Group-Project/issues"
   },
-  "homepage": "https://github.com/loay-ali/Node-Group-Project#readme"
+  "homepage": "https://github.com/bassant-hh/Node-Group-Project#readme"
 }
